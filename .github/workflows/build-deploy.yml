@@ -1,0 +1,29 @@
+name: Build and deploy to github pages
+on: push
+
+jobs:
+  build-deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: haskell/actions/setup@v1
+        with:
+          ghc-version: "8.8.3"
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Cache dependencies (Unix)
+        uses: actions/cache@v1
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-store-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('cedr-dot-dev.cabal') }}
+      - run: stack build
+      - run: stack exec cedr-dot-dev build
+      - name: Dump contexts
+      - name: 'deploy to github pages'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_branch: gh-pages
+          publish_dir: ./docs
+        if: github.ref == 'refs/heads/master'
